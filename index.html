@@ -216,8 +216,7 @@
         }
         names.forEach((name) => {
             const li = document.createElement('li');
-            const profile = agents[name];
-            li.innerHTML = `<span class="agent-name">${name}</span>${profile ? ' — <span class="agent-profile">' + profile + '</span>' : ''}`;
+            li.innerHTML = `<span class="agent-name">${name}</span>`;
             list.appendChild(li);
         });
     }
