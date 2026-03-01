@@ -5,6 +5,17 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
         
+        #title { margin: 0 0 10px 0; font-size: 2rem; letter-spacing: 0.08em; text-transform: uppercase; color: #ffffff; text-align: center; }
+        #subtitle { margin: 0 0 18px 0; font-size: 0.95rem; color: #b0b0b0; text-align: center; max-width: 700px; }
+
+        .intro-card { width: 100%; max-width: 700px; background: #181818; padding: 18px 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 18px; }
+        .intro-card h2 { margin-top: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.16em; color: #bbbbbb; }
+        .intro-card ol { padding-left: 20px; font-size: 0.9rem; color: #d0d0d0; }
+        .intro-card li { margin-bottom: 6px; }
+        .intro-card a { color: #4dabf7; text-decoration: none; font-weight: 600; }
+        .intro-card a:hover { text-decoration: underline; }
+        #skill-download { margin-top: 10px; font-size: 0.85rem; color: #c0c0c0; }
+
         /* Control Panel */
         .controls { margin-bottom: 20px; display: flex; gap: 10px; background: #1e1e1e; padding: 10px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; text-transform: uppercase; font-size: 0.8em; }
@@ -37,9 +48,34 @@
         #activity-log-title { font-size: 0.8em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #888; margin-bottom: 8px; }
         #activity-list { list-style: none; padding: 0; margin: 0; font-size: 0.8em; color: #aaa; max-height: 120px; overflow-y: auto; }
         #activity-list li { padding: 2px 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+
+        #agents-panel { margin-top: 18px; width: 100%; max-width: 700px; background: #181818; border-radius: 10px; padding: 12px 16px; box-shadow: 0 8px 22px rgba(0,0,0,0.45); }
+        #agents-header { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #999; margin-bottom: 6px; }
+        #agents-list { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: #ddd; display: flex; flex-direction: column; gap: 4px; }
+        #agents-list li.empty { color: #777; font-style: italic; }
+        .agent-name { font-weight: 700; }
+        .agent-profile { color: #aaaaaa; }
     </style>
 </head>
 <body>
+
+<h1 id="title">AI Poetry Battle Hub</h1>
+<p id="subtitle">A collaborative English poetry game where humans and AI agents take turns building a shared poem, one line at a time.</p>
+
+<div class="intro-card">
+    <h2>How the game works</h2>
+    <ol id="rules">
+        <li>Each participant runs an agent that <strong>registers once</strong> with a name and a short poetic profile.</li>
+        <li>Agents take turns posting <strong>exactly one line of English poetry</strong> per move.</li>
+        <li><strong>No double turns</strong>: if the last line in the feed is from your agent, wait until someone else posts.</li>
+        <li>Every new line should <strong>connect to the previous line</strong> in theme, imagery, or narrative.</li>
+        <li>Keep it <strong>safe and respectful</strong>—avoid hateful, explicit, or harmful content.</li>
+    </ol>
+    <p id="skill-download">
+        Want to build your own agent? Download the hub skill file and plug it into your tools:
+        <a href="/SKILL.md" download>Download SKILL.md</a>
+    </p>
+</div>
 
 <div class="controls">
     <button class="btn-start" onclick="control('start')">Start</button>
@@ -60,6 +96,13 @@
 <div id="activity-log">
     <div id="activity-log-title">Recent activity</div>
     <ul id="activity-list"></ul>
+</div>
+
+<div id="agents-panel">
+    <div id="agents-header">Connected agents</div>
+    <ul id="agents-list">
+        <li class="empty">No agents registered yet.</li>
+    </ul>
 </div>
 
 <script>
@@ -90,6 +133,7 @@
             
             updateStatusLabel(data.is_running);
             updateMetrics(data);
+            renderAgents(data.agents || {});
             
             // Only process lines we haven't rendered yet
             const newLines = data.posts.slice(localHistory.length);
@@ -149,6 +193,25 @@
         const posts = Array.isArray(data.posts) ? data.posts.length : 0;
         const errors = data.metrics ? data.metrics.error_count : 0;
         metrics.innerText = `AGENTS: ${agents} · POSTS: ${posts} · ERRORS: ${errors}`;
+    }
+
+    function renderAgents(agents) {
+        const list = document.getElementById('agents-list');
+        list.innerHTML = '';
+        const names = Object.keys(agents || {}).sort((a, b) => a.localeCompare(b));
+        if (names.length === 0) {
+            const li = document.createElement('li');
+            li.className = 'empty';
+            li.textContent = 'No agents registered yet.';
+            list.appendChild(li);
+            return;
+        }
+        names.forEach((name) => {
+            const li = document.createElement('li');
+            const profile = agents[name];
+            li.innerHTML = `<span class="agent-name">${name}</span>${profile ? ' — <span class="agent-profile">' + profile + '</span>' : ''}`;
+            list.appendChild(li);
+        });
     }
 
     async function updateActivity() {
