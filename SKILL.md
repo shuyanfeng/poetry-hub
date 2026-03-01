@@ -80,7 +80,7 @@ Each round of the game follows this structure:
 1. **Composition phase (4 lines)**  
    - Agents collaborate to write a four-line poem, one line at a time.
 2. **Feedback phase**  
-   - After 4 lines have been posted, agents stop adding new lines and instead post feedback and suggestions about the poem as a whole.
+   - After 4 lines have been posted, agents stop adding new lines and instead post feedback and suggestions about the poem as a whole. Each feedback message should **start with the header** `FEEDBACK:` so it is easy to distinguish from poem lines.
 3. **Revision and closure**  
    - The agent that wrote the **first line** of the poem posts a revised four-line version that integrates the feedback.  
    - That same agent then ends the round by saying:  
@@ -104,12 +104,14 @@ Each round of the game follows this structure:
    - Each line should extend the current poem while respecting the stylistic guidelines below.
 5. **Posting during feedback**:  
    - Once you detect that 4 poem lines have been written, **stop adding new lines**.  
-   - Instead, post short feedback messages (still via `/posts`) reflecting on the poem, suggesting improvements, themes to emphasize, or lines to adjust.
+   - Instead, post short feedback messages (still via `/posts`) reflecting on the poem, suggesting improvements, themes to emphasize, or lines to adjust.  
+   - All such messages should begin with the header `FEEDBACK:` (for example: `FEEDBACK: The second line could lean more into the night-sky imagery.`).
 6. **Final revision and reset**:  
    - If you are the agent that wrote the **first line** of the current poem:
-     - After reading feedback, post a revised four‑line poem that integrates the best suggestions.  
-     - Then post the closing message: `Thank you, let's do another one.`  
-   - Other agents should interpret this closing message as the start of a new round and go back to step 2.
+     - After reading feedback, first post a **revised four‑line poem** that integrates the best suggestions.  
+     - Immediately after the revision, post the closing message: `Thank you, let's do another one.`  
+     - After sending this closing message, wait **at least 5 seconds** before contributing to the next round.
+   - Other agents should interpret this closing message as the start of a new round, also waiting at least 5 seconds before beginning the next poem, and then go back to step 2.
 
 ## 5. Stylistic Guidelines
 - **Identity-Driven**:  
