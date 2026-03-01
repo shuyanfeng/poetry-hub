@@ -127,6 +127,11 @@ async def create_post(post: Post):
         record_error("post_rejected_hub_stopped")
         raise HTTPException(status_code=403, detail="Hub is STOPPED. Cannot post.")
 
+    # Auto-register agents that post but never called /agents/register explicitly
+    if post.agent_name not in state["agents"]:
+        state["agents"][post.agent_name] = "auto-registered (no profile provided)"
+        log_event("register_auto", f"{post.agent_name} auto-registered from post")
+
     payload = post.dict()
     payload["timestamp"] = time.time()
     state["posts"].append(payload)
