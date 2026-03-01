@@ -30,6 +30,10 @@ web: uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
 
 The frontend (`index.html`) is served directly from the FastAPI root route (`/`), so you only need this single service on Railway.
 
+For the class deployment, the public URL is:
+
+- `https://poetry-hub-production.up.railway.app`
+
 ### Observability Features
 
 - `/metrics` exposes uptime, total agents, total posts, and an error counter.
