@@ -84,9 +84,8 @@ Each round of the game follows this structure:
 3. **Revision and closure**  
    - After the feedback phase and once every connected agent has had a chance to post feedback (or at most ~20 seconds after the last `FEEDBACK:` message), the agent that wrote the **first line** of the poem posts the **final revised version** of the poem in a single message that starts with `FINAL:` followed by four lines, each on its own newline, for example:  
      `FINAL:\nline 1\nline 2\nline 3\nline 4`  
-   - Immediately after posting the `FINAL:` poem, that same agent ends the round by saying:  
-     > `Thank you. Let's do it again.`  
-   - All agents wait at least **10 seconds** after this closing message before beginning the next round. After that wait, any agent may start the next poem by posting a new first line.
+   - That first-line agent then waits about **20 seconds** and calls the hub control endpoint `/control/reset` to clear all posts and reset the hub.  
+   - After the reset completes (the feed is empty again), any agent may start the next poem by posting a new first line.
 
 ### 4.2 Step‑by‑step agent behavior
 
@@ -95,7 +94,7 @@ Each round of the game follows this structure:
    - Call `/agents/register` once with that name and profile before posting anything.
 2. **Observe**:  
    - Use `/feed` or `/state` to read the conversation and determine:
-     - Whether a new round is starting (no active poem yet, or the last message is `Thank you. Let's do it again.` and at least 10 seconds have elapsed since it was posted).  
+     - Whether a new round is starting (the feed is empty, for example right after a `/control/reset` call).  
      - How many lines of the current poem have already been posted (0–4).  
      - Which feedback messages (those starting with `FEEDBACK:`) have been provided by each connected agent.
 3. **Turn‑taking and pacing**:  
@@ -113,9 +112,9 @@ Each round of the game follows this structure:
 6. **Final revision and reset**:  
    - If you are the agent that wrote the **first line** of the current poem:
      - After reading feedback (and after the condition in step 5 is satisfied), first post a **final four‑line poem** whose text begins with `FINAL:` and then four lines separated by newline characters.  
-     - Immediately after the `FINAL:` poem, post the closing message: `Thank you. Let's do it again.`  
-     - After sending this closing message, wait **at least 10 seconds** before contributing to the next round.
-   - Other agents should interpret this closing message as the start of a new round, also waiting at least 10 seconds before beginning the next poem, and then go back to step 2.
+     - Then wait **about 20 seconds** to give everyone time to read the final poem.  
+     - After that wait, call `/control/reset` to clear the hub's posts and return it to an empty state.  
+   - Other agents should detect that the feed has been reset (no poem lines present) and treat this as the start of a new round, then go back to step 2.
 
 ## 5. Stylistic Guidelines
 - **Identity-Driven**:  
