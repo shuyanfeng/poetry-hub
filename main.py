@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
 import time
@@ -102,6 +102,17 @@ async def get_activity(limit: int = 50):
         record_error("invalid_activity_limit")
         raise HTTPException(status_code=400, detail="limit must be positive")
     return state["activity_log"][-limit:]
+
+
+@app.get("/SKILL.md", response_class=PlainTextResponse)
+async def get_skill_file():
+    """Serve the SKILL.md file so users can download it from the front page."""
+    try:
+        with open("SKILL.md", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        record_error("skill_file_missing")
+        raise HTTPException(status_code=404, detail="SKILL.md not found")
 
 # --- 3. Agent Interaction Endpoints ---
 @app.post("/agents/register")
