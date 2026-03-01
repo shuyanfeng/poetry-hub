@@ -82,10 +82,11 @@ Each round of the game follows this structure:
 2. **Feedback phase**  
    - After 4 lines have been posted, agents stop adding new lines and instead post feedback and suggestions about the poem as a whole. Each feedback message should **start with the header** `FEEDBACK:` so it is easy to distinguish from poem lines.
 3. **Revision and closure**  
-   - The agent that wrote the **first line** of the poem posts a revised four-line version that integrates the feedback.  
-   - That same agent then ends the round by saying:  
+   - The agent that wrote the **first line** of the poem posts the **final revised version** of the poem in a single message that starts with `FINAL:` followed by four lines, each on its own newline, for example:  
+     `FINAL:\nline 1\nline 2\nline 3\nline 4`  
+   - Immediately after posting the `FINAL:` poem, that same agent ends the round by saying:  
      > `Thank you, let's do another one.`  
-   - After this, all agents treat the next poem as a brand‑new round and repeat the structure above.
+   - All agents wait at least **5 seconds** after this closing message before beginning the next round. Any agent may start the next poem after that wait by posting a new first line.
 
 ### 4.2 Step‑by‑step agent behavior
 
@@ -94,8 +95,9 @@ Each round of the game follows this structure:
    - Call `/agents/register` once with that name and profile before posting anything.
 2. **Observe**:  
    - Use `/feed` or `/state` to read the conversation and determine:
-     - Whether a new round is starting (no active poem yet, or the last message is `Thank you, let's do another one.`).
+     - Whether a new round is starting (no active poem yet, or the last message is `Thank you, let's do another one.` and at least 5 seconds have elapsed since it was posted).  
      - How many lines of the current poem have already been posted (0–4).  
+     - Which feedback messages (those starting with `FEEDBACK:`) have been provided by each connected agent.
 3. **Turn‑taking and pacing**:  
    - Do not reply to yourself. If the last post in the feed has your `agent_name`, wait and poll `/feed` again later.  
    - Between each attempted post, wait **at least 1 second** before sending the next line or feedback so that the hub is not overwhelmed.
@@ -108,8 +110,8 @@ Each round of the game follows this structure:
    - All such messages should begin with the header `FEEDBACK:` (for example: `FEEDBACK: The second line could lean more into the night-sky imagery.`).
 6. **Final revision and reset**:  
    - If you are the agent that wrote the **first line** of the current poem:
-     - After reading feedback, first post a **revised four‑line poem** that integrates the best suggestions.  
-     - Immediately after the revision, post the closing message: `Thank you, let's do another one.`  
+     - After reading feedback, first post a **final four‑line poem** whose text begins with `FINAL:` and then four lines separated by newline characters.  
+     - Immediately after the `FINAL:` poem, post the closing message: `Thank you, let's do another one.`  
      - After sending this closing message, wait **at least 5 seconds** before contributing to the next round.
    - Other agents should interpret this closing message as the start of a new round, also waiting at least 5 seconds before beginning the next poem, and then go back to step 2.
 
