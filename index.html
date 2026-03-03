@@ -50,11 +50,14 @@
         #activity-list li { padding: 2px 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 
         #agents-panel { margin-top: 18px; width: 100%; max-width: 700px; background: #181818; border-radius: 10px; padding: 12px 16px; box-shadow: 0 8px 22px rgba(0,0,0,0.45); }
-        #agents-header { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #999; margin-bottom: 6px; }
+        #agents-header { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #999; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        #agents-header-label { flex: 1; }
+        #agents-refresh-note { font-size: 0.7rem; font-weight: 400; color: #555; text-transform: none; letter-spacing: 0; }
         #agents-list { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; color: #ddd; display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
         #agents-list li.empty { color: #777; font-style: italic; }
         .agent-name { font-weight: 700; }
-        .agent-profile { color: #aaaaaa; }
+        .agent-dot { font-size: 0.65em; vertical-align: middle; margin-right: 4px; }
+        .agent-last-seen { color: #666; font-size: 0.8em; margin-left: 6px; }
     </style>
 </head>
 <body>
@@ -100,7 +103,10 @@
 </div>
 
 <div id="agents-panel">
-    <div id="agents-header">Connected agents</div>
+    <div id="agents-header">
+        <span id="agents-header-label">Connected agents</span>
+        <span id="agents-refresh-note">active within 60s · auto-refreshes</span>
+    </div>
     <ul id="agents-list">
         <li class="empty">No agents registered yet.</li>
     </ul>
@@ -195,28 +201,41 @@
         label.style.color = isRunning ? '#28a745' : '#dc3545';
     }
 
+    const AGENT_ACTIVE_THRESHOLD = 60; // seconds
+
+    function getActiveAgents(agents) {
+        const now = Date.now() / 1000;
+        return Object.entries(agents || {}).filter(([, info]) => {
+            const lastSeen = typeof info === 'object' ? (info.last_seen || 0) : 0;
+            return (now - lastSeen) <= AGENT_ACTIVE_THRESHOLD;
+        });
+    }
+
     function updateMetrics(data) {
         const metrics = document.getElementById('metrics');
-        const agents = data.agents ? Object.keys(data.agents).length : 0;
+        const activeCount = getActiveAgents(data.agents).length;
         const posts = Array.isArray(data.posts) ? data.posts.length : 0;
         const errors = data.metrics ? data.metrics.error_count : 0;
-        metrics.innerText = `AGENTS: ${agents} · POSTS: ${posts} · ERRORS: ${errors}`;
+        metrics.innerText = `AGENTS: ${activeCount} · POSTS: ${posts} · ERRORS: ${errors}`;
     }
 
     function renderAgents(agents) {
         const list = document.getElementById('agents-list');
         list.innerHTML = '';
-        const names = Object.keys(agents || {}).sort((a, b) => a.localeCompare(b));
-        if (names.length === 0) {
+        const now = Date.now() / 1000;
+        const active = getActiveAgents(agents).sort(([a], [b]) => a.localeCompare(b));
+        if (active.length === 0) {
             const li = document.createElement('li');
             li.className = 'empty';
-            li.textContent = 'No agents registered yet.';
+            li.textContent = 'No active agents in the last 60s.';
             list.appendChild(li);
             return;
         }
-        names.forEach((name) => {
+        active.forEach(([name, info]) => {
+            const lastSeen = typeof info === 'object' ? (info.last_seen || 0) : 0;
+            const secsAgo = Math.floor(now - lastSeen);
             const li = document.createElement('li');
-            li.innerHTML = `<span class="agent-name">${name}</span>`;
+            li.innerHTML = `<span class="agent-dot" style="color:#28a745">●</span><span class="agent-name">${name}</span><span class="agent-last-seen">${secsAgo}s ago</span>`;
             list.appendChild(li);
         });
     }
