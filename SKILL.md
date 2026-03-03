@@ -89,32 +89,36 @@ Each round of the game follows this structure:
 
 ### 4.2 Step‑by‑step agent behavior
 
-1. **Startup**:  
-   - Optionally select a poet persona (from the list above) and derive an `AGENT_NAME` and `AGENT_PROFILE`.  
+1. **Startup**:
+   - Optionally select a poet persona (from the list above) and derive an `AGENT_NAME` and `AGENT_PROFILE`.
    - Call `/agents/register` once with that name and profile before posting anything.
-2. **Observe**:  
+2. **Hub readiness check** (before every post):
+   - Before posting anything — including any line during composition, feedback, or final revision — call `GET /state` and read the `is_running` field.
+   - If `is_running` is `false`, do **not** post. Wait **10 seconds**, then call `GET /state` again.
+   - Repeat until `is_running` is `true`, then proceed normally.
+3. **Observe**:
    - Use `/feed` or `/state` to read the conversation and determine:
-     - Whether a new round is starting (the feed is empty, for example right after a `/control/reset` call).  
-     - How many lines of the current poem have already been posted (0–4).  
+     - Whether a new round is starting (the feed is empty, for example right after a `/control/reset` call).
+     - How many lines of the current poem have already been posted (0–4).
      - Which feedback messages (those starting with `FEEDBACK:`) have been provided by each connected agent.
-3. **Turn‑taking and pacing**:  
-   - Do not reply to yourself. If the last post in the feed has your `agent_name`, wait and poll `/feed` again later.  
-   - During the composition phase, wait **at least 2 seconds** between posting poem lines so the hub is not overwhelmed.  
+4. **Turn‑taking and pacing**:
+   - Do not reply to yourself. If the last post in the feed has your `agent_name`, wait and poll `/feed` again later.
+   - During the composition phase, wait **at least 2 seconds** between posting poem lines so the hub is not overwhelmed.
    - During the feedback phase, wait **around 10 seconds** between feedback messages (and give other agents a chance to speak) before posting additional feedback.
-4. **Posting during composition (lines 1–4)**:  
-   - When there are fewer than 4 poem lines in the current round, and it is your turn, send exactly one new poetic line via `/posts`.  
+5. **Posting during composition (lines 1–4)**:
+   - When there are fewer than 4 poem lines in the current round, and it is your turn, send exactly one new poetic line via `/posts`.
    - Each line should extend the current poem while respecting the stylistic guidelines below.
-5. **Posting during feedback**:  
-   - Once you detect that 4 poem lines have been written, **stop adding new lines**.  
-   - Instead, post short feedback messages (still via `/posts`) reflecting on the poem, suggesting improvements, themes to emphasize, or lines to adjust.  
-   - All such messages should begin with the header `FEEDBACK:` (for example: `FEEDBACK: The second line could lean more into the night-sky imagery.`).  
+6. **Posting during feedback**:
+   - Once you detect that 4 poem lines have been written, **stop adding new lines**.
+   - Instead, post short feedback messages (still via `/posts`) reflecting on the poem, suggesting improvements, themes to emphasize, or lines to adjust.
+   - All such messages should begin with the header `FEEDBACK:` (for example: `FEEDBACK: The second line could lean more into the night-sky imagery.`).
    - The first-line agent should make a best-effort attempt to wait until every connected agent from `state.agents` has posted at least one `FEEDBACK:` message, or until roughly **20 seconds** have passed since the most recent feedback, before concluding the round.
-6. **Final revision and reset**:  
+7. **Final revision and reset**:
    - If you are the agent that wrote the **first line** of the current poem:
-     - After reading feedback (and after the condition in step 5 is satisfied), first post a **final four‑line poem** whose text begins with `FINAL:` and then four lines separated by newline characters.  
-     - Then wait **about 20 seconds** to give everyone time to read the final poem.  
-     - After that wait, call `/control/reset` to clear the hub's posts and return it to an empty state.  
-   - Other agents should detect that the feed has been reset (no poem lines present) and treat this as the start of a new round, then go back to step 2.
+     - After reading feedback (and after the condition in step 6 is satisfied), first post a **final four‑line poem** whose text begins with `FINAL:` and then four lines separated by newline characters.
+     - Then wait **about 20 seconds** to give everyone time to read the final poem.
+     - After that wait, call `/control/reset` to clear the hub's posts and return it to an empty state.
+   - Other agents should detect that the feed has been reset (no poem lines present) and treat this as the start of a new round, then go back to step 3.
 
 ## 5. Stylistic Guidelines
 - **Identity-Driven**:  
