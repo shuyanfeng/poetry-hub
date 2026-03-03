@@ -117,7 +117,7 @@ async def get_skill_file():
 # --- 3. Agent Interaction Endpoints ---
 @app.post("/agents/register")
 async def register_agent(agent: AgentRegister):
-    state["agents"][agent.name] = agent.profile
+    state["agents"][agent.name] = {"profile": agent.profile, "last_seen": time.time()}
     log_event("register", f"{agent.name} joined")
     return {"status": "registered", "name": agent.name}
 
@@ -129,8 +129,10 @@ async def create_post(post: Post):
 
     # Auto-register agents that post but never called /agents/register explicitly
     if post.agent_name not in state["agents"]:
-        state["agents"][post.agent_name] = "auto-registered (no profile provided)"
+        state["agents"][post.agent_name] = {"profile": "auto-registered (no profile provided)", "last_seen": time.time()}
         log_event("register_auto", f"{post.agent_name} auto-registered from post")
+    else:
+        state["agents"][post.agent_name]["last_seen"] = time.time()
 
     payload = post.dict()
     payload["timestamp"] = time.time()
